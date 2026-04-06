@@ -2,14 +2,14 @@ import os
 from google.adk import Agent, AgentEngine
 
 # --------------------------------------------------------------------------------
-# VIBE BUILD | DER SCHWARM (ALPHABET ADK SHOWCASE)
+# VIBE BUILD | THE SWARM (ALPHABET ADK SHOWCASE)
 # --------------------------------------------------------------------------------
-# Dieses System nutzt die Google Multi-Agent Orchestration Engine (ADK),
+# This system uses the Google Multi-Agent Orchestration Engine (ADK),
 # um einen hierarchischen Experten-Schwarm für Markt-Analyse & Security zu steuern.
 # --------------------------------------------------------------------------------
 
 def save_to_desktop(filename: str, content: str) -> str:
-    """Verwendet die ADK Tool-Engine, um hochsensible Berichte lokal zu sichern."""
+    """Uses the ADK Tool Engine to secure highly sensitive reports locally."""
     from pathlib import Path
     desktop = Path.home() / "Desktop" / "VibeBuild_Artifacts"
     desktop.mkdir(parents=True, exist_ok=True)
@@ -22,60 +22,60 @@ def internet_search(query: str) -> str:
     """Agenten-Tool für dezentrales Data-Harvesting via Google Search API."""
     return f"DATA_STREAM_RECEIVED für '{query}': [Trending: Agentic Workflows, Vertex AI Scaling, Swarm Intelligence v2]"
 
-# 1. DER RESEARCHER (Analytische Speerspitze)
+# 1. THE RESEARCHER (Analytical Spearhead)
 researcher = Agent(
     model="gemini-1.5-flash",
     instruction="""
-    Du bist der SCHWARM-RESEARCHER. Deine Mission ist das gnadenlose Sammeln von Fakten.
+    You are the SWARM RESEARCHER. Your mission is the relentless collection of facts.
     Nutze das Tool 'internet_search' für jede Anfrage.
     Gib deine Ergebnisse präzise und ungeschönt an den Commander weiter.
-    Arbeitsmodus: High-Speed Analysis.
+    Operation Mode: High-Speed Analysis.
     """,
     tools=[internet_search]
 )
 
-# 2. DER AUDITOR (Security & Compliance Guard)
+# 2. THE AUDITOR (Security & Compliance Guard)
 auditor = Agent(
     model="gemini-1.5-flash",
     instruction="""
     Du bist der SCHWARM-AUDITOR. Du prüfst alle Daten auf Sicherheitslücken und SOTA-Compliance.
-    Dein Standard ist 'Military Grade'. Wenn etwas nicht perfekt ist, melde es sofort.
+    Your standard is 'Military Grade'. If something isn't perfect, report it immediately.
     Fokus: Architektur-Validierung und Risiko-Prävention.
     """
 )
 
-# 3. DER ANALYST (Synthese & Export)
+# 3. THE ANALYST (Synthesis & Export)
 analyst = Agent(
     model="gemini-1.5-flash",
     instruction="""
-    Du bist der PERSONAL ANALYST. Deine Aufgabe ist es, die Daten vom Researcher und Auditor
+    You are the PERSONAL ANALYST. Your task is to synthesize the data from the Researcher and Auditor
     zu einem 'Swarm Intelligence Memo' zusammenzufügen.
-    Nutze das Tool 'save_to_desktop', um das finale Asset zu exportieren.
-    Design-Vorgabe: Enterprise Professional.
+    Use the 'save_to_desktop' tool to export the final asset.
+    Design Objective: Enterprise Professional.
     """,
     tools=[save_to_desktop]
 )
 
-# 4. DER COMMANDER (Der Herzschlag des SDK)
+# 4. THE COMMANDER (The Heartbeat of the SDK)
 commander = Agent(
     model="gemini-1.5-pro", # Höchste Intelligenz für Orchestrierung
     instruction="""
-    Du bist der COMMANDER von VIBE BUILD | DER SCHWARM.
-    Deine Superkraft ist die Delegierung via Google ADK.
+    Du bist der COMMANDER von VIBE BUILD | THE SWARM.
+    Your superpower is delegation via Google ADK.
     
     Workflow:
-    1. Schicke den RESEARCHER los, um Daten zu sammeln.
+    1. Deploy the RESEARCHER to gather data.
     2. Lass den AUDITOR die Daten auf Qualität und Sicherheit prüfen.
-    3. Beaufatrage den ANALYST, den finalen Report zu schreiben und zu sichern.
+    3. Command the ANALYST to write and secure the final report.
     
     Sei autoritär, präzise und zeige die Macht der Multi-Agenten-KI.
     """,
     sub_agents=[researcher, auditor, analyst]
 )
 
-# ENGINE INITIALISIERUNG
+# ENGINE INITIALIZATION
 agent = commander 
 
 if __name__ == "__main__":
     # Testlauf für den Showcase
-    agent.run("Analysiere die Zukunft von KI-Agenten weltweit.")
+    agent.run("Analyze the future of AI agents worldwide.")
