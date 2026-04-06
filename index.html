@@ -106,15 +106,31 @@
                     <p class="text-slate-500 text-[10px] mt-2 font-mono uppercase">Verknüpfen Sie dieses Dashboard mit Ihrer Google Cloud</p>
                 </div>
                 <div class="space-y-6">
-                    <input type="text" id="projectId" placeholder="Project ID" class="w-full bg-black/60 border border-white/5 rounded-2xl p-5 text-blue-400 font-mono text-sm focus:border-blue-500 outline-none transition-all">
-                    <input type="text" id="location" value="us-central1" class="w-full bg-black/60 border border-white/5 rounded-2xl p-5 text-slate-400 font-mono text-sm focus:border-blue-500 outline-none transition-all">
-                    <input type="text" id="agentId" placeholder="Agent Engine ID (z.B. der_schwarm)" class="w-full bg-black/60 border border-white/5 rounded-2xl p-5 text-fuchsia-400 font-mono text-sm focus:border-fuchsia-500 outline-none transition-all">
-                    <input type="password" id="accessToken" placeholder="Google Auth Token (ya29...)" class="w-full bg-black/60 border border-white/5 rounded-2xl p-5 text-fuchsia-400 font-mono text-sm focus:border-fuchsia-500 outline-none transition-all">
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-600 mb-3 tracking-widest">Authority Nexus (Service Account JSON)</label>
+                        <textarea id="jsonInput" placeholder="Paste Service Account JSON content here..." 
+                                  class="w-full h-44 bg-black/60 border border-white/5 rounded-2xl p-5 text-blue-400 font-mono text-[10px] focus:border-blue-500 outline-none transition-all resize-none"></textarea>
+                        <button onclick="extractJsonData()" class="mt-2 text-[9px] text-blue-500 hover:text-white uppercase font-bold tracking-widest transition-all">
+                            Parse credentials ⚡
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="opacity-40">
+                             <input type="text" id="projectId" placeholder="Project ID" readonly class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono outline-none">
+                        </div>
+                        <div>
+                             <input type="password" id="accessToken" placeholder="Access Token (ya29...)" class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-fuchsia-400 focus:border-fuchsia-500 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <input type="text" id="location" value="us-central1" class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-slate-400 outline-none transition-all">
+                    <input type="text" id="agentId" placeholder="Agent Engine ID (z.B. der_schwarm)" class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-slate-400 outline-none transition-all">
                     
                     <button onclick="saveConnectorData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 rounded-2xl uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all">
-                        LINK PROJECT & START
+                        ESTABLISH AUTHORITY
                     </button>
-                    <p class="text-[8px] text-slate-600 text-center uppercase tracking-widest">Geheimnisse werden nur lokal gespeichert.</p>
+                    <p class="text-[8px] text-slate-600 text-center uppercase tracking-widest">Secrets remain in your local context. Zero server leakage.</p>
                 </div>
             </div>
         </div>
@@ -124,6 +140,21 @@
         const terminal = document.getElementById('log-terminal');
         const input = document.getElementById('commandInput');
         const btn = document.getElementById('dispatchBtn');
+
+        function extractJsonData() {
+            const raw = document.getElementById('jsonInput').value;
+            try {
+                const data = JSON.parse(raw);
+                if (data.project_id) {
+                    document.getElementById('projectId').value = data.project_id;
+                    addLog(`NEXUS: Project '${data.project_id}' erkannt.`, 'success');
+                } else {
+                    alert("JSON gültig, aber keine project_id gefunden.");
+                }
+            } catch(e) {
+                alert("Ungültiges JSON-Format.");
+            }
+        }
 
         let auth = {
             projectId: localStorage.getItem('projectId') || '',
