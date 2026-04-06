@@ -214,33 +214,57 @@
 
         async function dispatchSwarm() {
             const prompt = input.value;
-            if(!prompt) return alert("Befehl eingeben!");
+            if(!prompt) return alert("System-Fehler: Kommando-Input erforderlich.");
             
+            if (!auth.accessToken || !auth.projectId) {
+                addLog('CRITICAL_ERROR: Kein Cloud-Nexus aktiv. Bitte Connector hintelegen.', 'error');
+                switchView('connector');
+                return;
+            }
+
             btn.disabled = true;
             terminal.innerHTML = '';
-            addLog(`INITIALIZING SWARM BROADCAST... Command: "${prompt.substring(0, 40)}..."`, 'success');
+            addLog(`INITIALIZING GLOBAL DISPATCH... Project: ${auth.projectId}`, 'success');
+            await sleep(1000);
+            addLog(`ESTABLISHING LINK to Agent '${auth.agentId}'...`, 'agent');
 
-            // CASE 1: REAL API CALL (IF CREDENTIALS EXIST)
-            if (auth.accessToken && auth.projectId && auth.agentId) {
-                addLog(`BRIDGE_ACTIVE: Calling Vertex AI Agent Engine @ ${auth.location}...`, 'agent');
+            try {
+                const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/agents/${auth.agentId}:run`;
                 
-                try {
-                    // MOCKING the fetch structure for viewers to see but logic is REAL
-                    // Actual endpoint: https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/agents/${auth.agentId}:run
-                    await sleep(2000);
-                    addLog(`NEXUS_LINK_SUCCESS: Agent '${auth.agentId}' triggered.`, 'success');
-                    
-                    // SIMULATION for showcase but the structure is 100% prepared to be real
-                    await performSimulationProcess();
-                } catch(e) {
-                    addLog(`LINK_CRITICAL_ERROR: ${e.message}`, 'error');
+                addLog(`CALLING_VERTEX_AI: Sending prompt to orchestration engine...`, 'info');
+                
+                // DAS IST DER ECHTE API CALL FÜR DEINE ZUSCHAUER
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${auth.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        input: { content: prompt }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || 'API Communication failed');
                 }
-            } else {
-                // CASE 2: SIMULATION (FOR SHOWCASE)
-                addLog('WARNING: No credentials provided. Running in MISSION_SIMULATION mode.', 'error');
-                await performSimulationProcess();
+
+                const data = await response.json();
+                addLog('DATA_RECEIVED: Synchronisierung abgeschlossen.', 'success');
+                
+                // EXTRAKTION DER ANTWORT VOM ECHTEN AGENTEN
+                const agentResponse = data.output?.content || 'Mission erfolgreich, aber kein Text-Output erhalten.';
+                addLog(`SCHWARM_OUTPUT: ${agentResponse}`, 'agent');
+
+            } catch(e) {
+                addLog(`BRIDGE_FAILURE: ${e.message}`, 'error');
+                addLog('TIPP: Prüfen Sie Ihren Token (gcloud auth print-access-token).', 'info');
+            } finally {
+                btn.disabled = false;
+                addLog('SWARM-MODE: Mission Complete. Hibernate Status: ON.', 'info');
+                createArtifactCard();
             }
-            btn.disabled = false;
         }
 
         async function performSimulationProcess() {
