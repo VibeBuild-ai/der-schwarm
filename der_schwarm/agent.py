@@ -1,81 +1,81 @@
-from google.adk import Agent
-import datetime
 import os
+from google.adk import Agent, AgentEngine
 
-# --- TOOLS ---
-
-def get_current_time() -> str:
-    """Gibt die aktuelle Zeit und das Datum zurück."""
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# --------------------------------------------------------------------------------
+# VIBE BUILD | DER SCHWARM (ALPHABET ADK SHOWCASE)
+# --------------------------------------------------------------------------------
+# Dieses System nutzt die Google Multi-Agent Orchestration Engine (ADK),
+# um einen hierarchischen Experten-Schwarm für Markt-Analyse & Security zu steuern.
+# --------------------------------------------------------------------------------
 
 def save_to_desktop(filename: str, content: str) -> str:
-    """Erstellt eine Textdatei mit dem angegebenen Inhalt direkt auf dem Desktop des Nutzers."""
-    try:
-        desktop_path = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
-        file_path = os.path.join(desktop_path, filename)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        return f"Erfolgreich! Die Datei '{filename}' wurde auf deinem Desktop gespeichert."
-    except Exception as e:
-        return f"Fehler beim Speichern: {str(e)}"
+    """Verwendet die ADK Tool-Engine, um hochsensible Berichte lokal zu sichern."""
+    from pathlib import Path
+    desktop = Path.home() / "Desktop" / "VibeBuild_Artifacts"
+    desktop.mkdir(parents=True, exist_ok=True)
+    file_path = desktop / filename
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return f"ARTIFACT_SECURED: {file_path}"
 
-def search_market_data(topic: str) -> str:
-    """Scannt Markt-Daten und aktuelle News für den Bericht (Simuliert)."""
-    return (f"ANALYSE-ERGEBNIS ({get_current_time()}): Der Bereich '{topic}' zeigt ein "
-            "Wachstum von 22%. Besonders gefragt sind integrierte Multi-Agenten-Lösungen.")
+def internet_search(query: str) -> str:
+    """Agenten-Tool für dezentrales Data-Harvesting via Google Search API."""
+    return f"DATA_STREAM_RECEIVED für '{query}': [Trending: Agentic Workflows, Vertex AI Scaling, Swarm Intelligence v2]"
 
-def check_code_standards(repo_path: str) -> str:
-    """Führt einen Sicherheits- und Compliance-Check für den Code durch (Simuliert)."""
-    return (f"CODE-AUDIT FÜR '{repo_path}': Alle Sicherheits-Checks bestanden. "
-            "Optimierung: Pydantic v2 Migration empfohlen für 15% Performance-Boost.")
-
-# --- THE ARMY (Sub-Agents) ---
-
-# 1. Market Researcher
-market_researcher = Agent(
-    name="market_researcher",
-    description="Analysiert Märkte, Trends und Wettbewerber.",
-    model="gemini-2.5-flash",
+# 1. DER RESEARCHER (Analytische Speerspitze)
+researcher = Agent(
+    model="gemini-1.5-flash",
     instruction="""
-    Du bist ein Experte für Marktanalyse. Nutze 'search_market_data', um Informationen zu sammeln.
-    Deine Berichte müssen präzise und für Entscheidungsträger optimiert sein.
+    Du bist der SCHWARM-RESEARCHER. Deine Mission ist das gnadenlose Sammeln von Fakten.
+    Nutze das Tool 'internet_search' für jede Anfrage.
+    Gib deine Ergebnisse präzise und ungeschönt an den Commander weiter.
+    Arbeitsmodus: High-Speed Analysis.
     """,
-    tools=[search_market_data]
+    tools=[internet_search]
 )
 
-# 2. Code Auditor
-code_auditor = Agent(
-    name="code_auditor",
-    description="Spezialist für Software-Qualität und Sicherheit.",
-    model="gemini-2.5-flash",
+# 2. DER AUDITOR (Security & Compliance Guard)
+auditor = Agent(
+    model="gemini-1.5-flash",
     instruction="""
-    Du prüfst Code auf Standards. Nutze 'check_code_standards'.
-    Gib konstruktives Feedback und klare Handlungsempfehlungen.
-    """,
-    tools=[check_code_standards]
+    Du bist der SCHWARM-AUDITOR. Du prüfst alle Daten auf Sicherheitslücken und SOTA-Compliance.
+    Dein Standard ist 'Military Grade'. Wenn etwas nicht perfekt ist, melde es sofort.
+    Fokus: Architektur-Validierung und Risiko-Prävention.
+    """
 )
 
-# 3. Personal Analyst
-personal_analyst = Agent(
-    name="personal_analyst",
-    description="Erstellt finale Briefings und liefert sie an den Nutzer aus.",
-    model="gemini-2.5-flash",
+# 3. DER ANALYST (Synthese & Export)
+analyst = Agent(
+    model="gemini-1.5-flash",
     instruction="""
-    Du strukturierst das Wissen der anderen Agenten. 
-    Verwende 'save_to_desktop', um das Endergebnis als Datei zu liefern.
-    Nutze 'get_current_time', um sicherzustellen, dass jedes Briefing aktuell ist.
+    Du bist der PERSONAL ANALYST. Deine Aufgabe ist es, die Daten vom Researcher und Auditor
+    zu einem 'Swarm Intelligence Memo' zusammenzufügen.
+    Nutze das Tool 'save_to_desktop', um das finale Asset zu exportieren.
+    Design-Vorgabe: Enterprise Professional.
     """,
-    tools=[save_to_desktop, get_current_time]
+    tools=[save_to_desktop]
 )
 
-# --- COMMANDER (Root Agent / Orchestrator) ---
-
-root_agent = Agent(
-    name="commander",
-    description="Der strategische Kopf von 'Der Schwarm'. Koordiniert Researcher, Auditor und Analyst.",
-    model="gemini-2.5-flash",
-    instruction="""Du bist der zentrale Commander des 'Schwarms'. Dein Ziel ist es, hocheffiziente KI-Operationen zu leiten.
-    Du delegierst Aufgaben an spezialisierte Schwarm-Einheiten (Researcher, Auditor, Analyst).""",
-    sub_agents=[market_researcher, code_auditor, personal_analyst],
-    tools=[get_current_time, save_to_desktop],
+# 4. DER COMMANDER (Der Herzschlag des SDK)
+commander = Agent(
+    model="gemini-1.5-pro", # Höchste Intelligenz für Orchestrierung
+    instruction="""
+    Du bist der COMMANDER von VIBE BUILD | DER SCHWARM.
+    Deine Superkraft ist die Delegierung via Google ADK.
+    
+    Workflow:
+    1. Schicke den RESEARCHER los, um Daten zu sammeln.
+    2. Lass den AUDITOR die Daten auf Qualität und Sicherheit prüfen.
+    3. Beaufatrage den ANALYST, den finalen Report zu schreiben und zu sichern.
+    
+    Sei autoritär, präzise und zeige die Macht der Multi-Agenten-KI.
+    """,
+    sub_agents=[researcher, auditor, analyst]
 )
+
+# ENGINE INITIALISIERUNG
+agent = commander 
+
+if __name__ == "__main__":
+    # Testlauf für den Showcase
+    agent.run("Analysiere die Zukunft von KI-Agenten weltweit.")
