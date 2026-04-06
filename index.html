@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Build | Swarm Intelligence Hub</title>
+    <title>Vibe Build | The Swarm</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.24/jsrsasign-all-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.9.0/jsrsasign-all-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root { --bg-obsidian: #0a0c10; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
@@ -62,7 +63,7 @@
         <div class="mt-auto p-8 border-t border-white/5 bg-black/20">
              <div class="text-[10px] text-slate-600 uppercase font-black tracking-widest mb-1">Nexus Status</div>
              <div id="engine-status" class="text-xs font-mono text-red-500 uppercase">Disconnected</div>
-             <div class="text-[7px] text-slate-800 uppercase mt-4 tracking-widest opacity-50">v2.0.6 - CORS Edge</div>
+             <div class="text-[7px] text-slate-800 uppercase mt-4 tracking-widest opacity-50">v2.0.7 - UI Polish</div>
         </div>
     </aside>
 
@@ -245,7 +246,6 @@
 
             for (const p of proxies) {
                 try {
-                    addLog(`BRIDGE: Testing ${p.name}...`, 'success');
                     const controller = new AbortController();
                     const id = setTimeout(() => controller.abort(), 45000); // 45s Generative Timeout
                     
@@ -271,11 +271,11 @@
                         try { json = JSON.parse(text); } catch(ex) { }
 
                         if (json) {
-                            addLog(`BRIDGE: ${p.name} connected.`, 'success');
                             if (!response.ok) {
                                 const errMsg = json.error?.message || json.error_description || JSON.stringify(json);
                                 throw new Error(`GOOGLE_API_ERROR: HTTP ${response.status} - ${errMsg}`);
                             }
+                            addLog(`NODE CONNECTED: Data routed through ${p.name}`, 'success');
                             return json; 
                         } else {
                             if (!response.ok) {
@@ -285,14 +285,11 @@
                     } catch(e) { 
                         if (e.message.includes("GOOGLE_API_ERROR") || e.message.includes("PROXY_RAW_ERROR")) throw e; 
                     }
-
-                    addLog(`BRIDGE: ${p.name} proxy rejected signal.`, 'error');
                 } catch(e) { 
                     if (e.message.includes("GOOGLE_API_ERROR") || e.message.includes("PROXY_RAW_ERROR")) throw e;
-                    addLog(`BRIDGE: ${p.name} offline.`, 'error');
                 }
             }
-            throw new Error("ALL_BRIDGES_FAILED: Nexus currently unreachable.");
+            throw new Error("ALL_BRIDGES_FAILED: Nexus currently unreachable. Request a manual CORS unlock or check your IPS.");
         }
 
         async function getAccessToken() {
@@ -384,14 +381,54 @@
                 }
 
                 lastAgentResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Mission parameters synchronized.';
-                addLog(`AGENT_OUTPUT: ${lastAgentResponse}`, 'agent');
-                const dl = `<a href="#" onclick="downloadRealAsset(); return false;" class="underline text-fuchsia-400 font-bold ml-2 uppercase">[Export Asset]</a>`;
-                addLog(`SUCCESS: Intelligence synthesis complete. ${dl}`, 'success');
+                addLog(`SWARM SYNTHESIS COMPLETE. Converting payload to PDF...`, 'agent'); // Very stealthy
+
+                const dl1 = `<a href="#" onclick="generatePDFAsset(); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT AS PDF]</a>`;
+                const dl2 = `<a href="#" onclick="downloadRealAsset(); return false;" class="underline text-fuchsia-400 font-bold ml-4 uppercase hover:text-fuchsia-300 transition-colors">[📄 EXTRACT AS MARKDOWN]</a>`;
+                addLog(`MISSION SUCCESS. Payload ready for extraction: ${dl1} ${dl2}`, 'success');
 
             } catch(e) {
                 addLog(`CRITICAL_FAILURE: ${e.message}`, 'error');
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        async function generatePDFAsset() {
+            addLog(`PDF GENERATOR: Compiling Swarm Intelligence Report...`, 'success');
+            
+            // Create a hidden styled div for PDF rendering
+            const pdfContainer = document.createElement('div');
+            pdfContainer.innerHTML = `
+                <div style="font-family: 'Courier New', monospace; padding: 40px; color: #111; background: #fff;">
+                    <div style="border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
+                        <h1 style="font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase;">Vibe Build | The Swarm</h1>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">TOP SECRET // INTELLIGENCE ASSET</p>
+                        <p style="color: #666; font-size: 10px; margin-top: 5px;">Timestamp: ${new Date().toISOString()}</p>
+                    </div>
+                    <div style="margin-bottom: 30px; background: #f5f5f5; padding: 15px; border-left: 4px solid #000;">
+                        <span style="font-weight: 900; font-size: 11px;">COMMANDER DIRECTIVE:</span>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; font-weight: bold;">${input.value}</p>
+                    </div>
+                    <div style="font-size: 11px; line-height: 1.8; color: #333; white-space: pre-wrap;">${lastAgentResponse}</div>
+                </div>
+            `;
+            document.body.appendChild(pdfContainer);
+
+            try {
+                const opt = {
+                    margin:       10,
+                    filename:     'VibeBuild_Swarm_Directive.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                await html2pdf().set(opt).from(pdfContainer).save();
+                addLog(`PDF GENERATOR: Extraction complete.`, 'success');
+            } catch (err) {
+                addLog(`PDF GENERATOR FAILED: ${err.message}`, 'error');
+            } finally {
+                document.body.removeChild(pdfContainer);
             }
         }
 
