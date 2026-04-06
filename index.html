@@ -120,6 +120,12 @@
                              <input type="text" id="agentId" value="der_schwarm" class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-fuchsia-400 focus:border-fuchsia-500 outline-none transition-all">
                         </div>
                     </div>
+
+                    <div>
+                        <label class="text-[8px] uppercase text-slate-700 font-bold ml-1">Private VPS Proxy (Optional)</label>
+                        <input type="text" id="vpsProxy" placeholder="z.B. http://YOUR_VPS_IP:5005" class="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-green-500 focus:border-green-500 outline-none transition-all">
+                        <p class="text-[7px] text-slate-800 uppercase tracking-widest mt-1">Leaves empty to use Public Global Proxy.</p>
+                    </div>
                     
                     <button onclick="saveConnectorData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-6 rounded-2xl uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all">
                         ACTIVATE AUTHORITY
@@ -199,13 +205,6 @@
             const div = document.createElement('div');
             const time = new Date().toLocaleTimeString();
             let color = type === 'success' ? 'text-green-400' : (type === 'agent' ? 'text-blue-400 font-bold' : (type === 'error' ? 'text-red-500 font-black' : 'text-slate-600'));
-            div.className = `flex ${color}`;
-            div.innerHTML = `<span class="mr-6 opacity-20 font-mono text-[9px] tabular-nums">${time}</span> <span class="flex-1">${msg}</span>`;
-            if (terminal.innerText.includes('Awaiting')) terminal.innerHTML = '';
-            terminal.appendChild(div);
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
         async function getAccessToken() {
             try {
                 const header = { alg: "RS256", typ: "JWT" };
@@ -221,11 +220,15 @@
                 const sPayload = JSON.stringify(payload);
                 const jwt = KJUR.jws.JWS.sign("RS256", sHeader, sPayload, auth.privateKey);
 
-                // ULTRA-STABILE BRÜCKE (CODETABS PROXY)
-                const proxy = "https://api.codetabs.com/v1/proxy?quest=";
                 const tokenUrl = "https://oauth2.googleapis.com/token";
                 
-                const response = await fetch(proxy + encodeURIComponent(tokenUrl), {
+                // DYNAMISCHE PROXY-AUSWAHL
+                let fetchUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(tokenUrl);
+                if (auth.vpsProxy) {
+                    fetchUrl = `${auth.vpsProxy}/nexus_gateway?url=${encodeURIComponent(tokenUrl)}`;
+                }
+                
+                const response = await fetch(fetchUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
@@ -256,17 +259,20 @@
                 const token = await getAccessToken();
                 const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/agents/${auth.agentId}:run`;
                 
-                addLog(`BROADCAST: Sending encrypted signal to Vertex AI via Nexus Bridge...`, 'success');
+                addLog(`BROADCAST: Sending encrypted signal via ${auth.vpsProxy ? 'Private VPS' : 'Public Nexus Bridge'}...`, 'success');
                 
-                const proxy = "https://api.codetabs.com/v1/proxy?quest=";
-                const response = await fetch(proxy + encodeURIComponent(endpoint), {
+                let fetchUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(endpoint);
+                if (auth.vpsProxy) {
+                    fetchUrl = `${auth.vpsProxy}/nexus_gateway?url=${encodeURIComponent(endpoint)}`;
+                }
+
+                const response = await fetch(fetchUrl, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ input: { content: prompt } })
                 });
 
                 if (!response.ok) {
-                    const errorDetails = await response.text();
                     throw new Error(`AGENT_REJECTION: ${response.status}`);
                 }
 
