@@ -6,7 +6,6 @@
     <title>Vibe Build | The Swarm</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.9.0/jsrsasign-all-min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root { --bg-obsidian: #0a0c10; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); }
@@ -63,7 +62,7 @@
         <div class="mt-auto p-8 border-t border-white/5 bg-black/20">
              <div class="text-[10px] text-slate-600 uppercase font-black tracking-widest mb-1">Nexus Status</div>
              <div id="engine-status" class="text-xs font-mono text-red-500 uppercase">Disconnected</div>
-             <div class="text-[7px] text-slate-800 uppercase mt-4 tracking-widest opacity-50">v2.0.7 - UI Polish</div>
+             <div class="text-[7px] text-slate-800 uppercase mt-4 tracking-widest opacity-50">v2.0.8 - Native Asset Export</div>
         </div>
     </aside>
 
@@ -441,42 +440,55 @@
             }
         }
 
-        async function generatePDFAsset() {
-            addLog(`PDF GENERATOR: Compiling Swarm Intelligence Report...`, 'success');
+        function generatePDFAsset() {
+            addLog(`ASSET GENERATOR: Compiling Swarm Intelligence Report...`, 'success');
             
-            // Create a hidden styled div for PDF rendering
-            const pdfContainer = document.createElement('div');
-            pdfContainer.innerHTML = `
-                <div style="font-family: 'Courier New', monospace; padding: 40px; color: #111; background: #fff;">
-                    <div style="border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
-                        <h1 style="font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase;">Vibe Build | The Swarm</h1>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">TOP SECRET // INTELLIGENCE ASSET</p>
-                        <p style="color: #666; font-size: 10px; margin-top: 5px;">Timestamp: ${new Date().toISOString()}</p>
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>VibeBuild_Intel_Report</title>
+                    <style>
+                        body { font-family: 'Courier New', monospace; padding: 40px; color: #111; background: #fff; line-height: 1.6; }
+                        .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+                        h1 { font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
+                        .meta { color: #666; font-size: 12px; margin-top: 5px; }
+                        .directive { margin-bottom: 30px; background: #f5f5f5; padding: 15px; border-left: 4px solid #000; }
+                        .directive-title { font-weight: 900; font-size: 11px; }
+                        .directive-text { margin: 10px 0 0 0; font-size: 12px; font-weight: bold; }
+                        .content { font-size: 12px; color: #333; white-space: pre-wrap; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Vibe Build | The Swarm</h1>
+                        <p class="meta">TOP SECRET // INTELLIGENCE ASSET</p>
+                        <p class="meta" style="font-size: 10px;">Timestamp: ${new Date().toISOString()}</p>
                     </div>
-                    <div style="margin-bottom: 30px; background: #f5f5f5; padding: 15px; border-left: 4px solid #000;">
-                        <span style="font-weight: 900; font-size: 11px;">COMMANDER DIRECTIVE:</span>
-                        <p style="margin: 10px 0 0 0; font-size: 12px; font-weight: bold;">${input.value}</p>
+                    <div class="directive">
+                        <span class="directive-title">COMMANDER DIRECTIVE:</span>
+                        <p class="directive-text">${input.value}</p>
                     </div>
-                    <div style="font-size: 11px; line-height: 1.8; color: #333; white-space: pre-wrap;">${lastAgentResponse}</div>
-                </div>
+                    <div class="content">${lastAgentResponse}</div>
+                    
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
             `;
-            document.body.appendChild(pdfContainer);
-
-            try {
-                const opt = {
-                    margin:       10,
-                    filename:     'Intel_Report.pdf',
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2 },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                await html2pdf().set(opt).from(pdfContainer).save();
-                addLog(`PDF GENERATOR: Extraction complete.`, 'success');
-            } catch (err) {
-                addLog(`PDF GENERATOR FAILED: ${err.message}`, 'error');
-            } finally {
-                document.body.removeChild(pdfContainer);
-            }
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            addLog(`ASSET GENERATOR: Native print dialect engaged.`, 'success');
         }
 
         function downloadRealAsset() {
