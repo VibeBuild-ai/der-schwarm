@@ -1,0 +1,25 @@
+# Vertex AI Agent Engine Deployment Configuration
+# MISSION: THE ARMY 🎖🚀
+
+name: the-army-agent
+display_name: "The Army - Autonomous Multi-Agent Suite"
+description: "Parallel Market Research, Code Auditing, and Personal Analysis."
+
+# Runtime-Einstellungen
+runtime:
+  python:
+    version: "3.10"
+    entry_point: "the_army.agent:root_agent"
+
+# Umgebungsvariablen für die Cloud
+env_variables:
+  GOOGLE_GENAI_USE_VERTEXAI: "TRUE"
+  GOOGLE_CLOUD_LOCATION: "us-central1"
+
+# Berechtigungen (Roles)
+# Dein Agent benötigt Zugriff auf Vertex AI und Cloud Storage (für Berichte).
+permissions:
+  roles:
+    - roles/aiplatform.user
+    - roles/storage.objectViewer
+    - roles/logging.logWriter
