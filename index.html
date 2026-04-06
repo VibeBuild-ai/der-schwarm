@@ -339,7 +339,7 @@
             const prompt = input.value;
             if(!prompt) return alert("Befehl erforderlich.");
             
-            if (!auth.privateKey || !auth.projectId || !auth.agentId) {
+            if (!auth.privateKey || !auth.projectId) {
                 addLog('AUTHORITY_ERROR: Please link your Service Account JSON.', 'error');
                 switchView('connector'); return;
             }
@@ -350,30 +350,40 @@
 
             try {
                 const token = await getAccessToken();
-                const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/agents/${auth.agentId}:run`;
+                
+                // Wir mappen 'der_schwarm' auf Gemini 1.5 Pro, da Vertex AI kein natives '/agents' REST hat
+                let modelId = auth.agentId === "der_schwarm" ? "gemini-1.5-pro-001" : auth.agentId;
+                if (!modelId.includes("gemini")) modelId = "gemini-1.5-pro-001"; // Fallback Safenet
+
+                const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/publishers/google/models/${modelId}:generateContent`;
                 
                 addLog(`BROADCAST: Sending signal via redundant Proxy-Bridge...`, 'success');
                 
-                // Nutze Multi-Brücke, falls kein VPS Proxy da ist
+                const promptPayload = {
+                    "contents": [{ "role": "user", "parts": [{ "text": prompt }] }],
+                    "systemInstruction": { "parts": [{ "text": "Du bist der COMMANDER von VIBE BUILD | DER SCHWARM. Deine Aufgabe ist es, Befehle analytisch und professionell zu beantworten. Strukturiere deine Antwort als 'Mission Report' mit Teil-Einschätzungen von deinen Sub-Agenten (Researcher, Auditor, Analyst)." }] },
+                    "generationConfig": { "temperature": 0.4 }
+                };
+
                 let data;
                 if (auth.vpsProxy) {
                     const vpsUrl = `${auth.vpsProxy}/nexus_gateway?url=${encodeURIComponent(endpoint)}`;
                     const res = await fetch(vpsUrl, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ input: { content: prompt } })
+                        body: JSON.stringify(promptPayload)
                     });
-                    if(!res.ok) throw new Error(`VPS_REJECTION: ${res.status}`);
+                    if(!res.ok) throw new Error(`VPS_REJECTION: HTTP ${res.status}`);
                     data = await res.json();
                 } else {
                     data = await multiFetch(endpoint, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ input: { content: prompt } })
+                        body: JSON.stringify(promptPayload)
                     });
                 }
 
-                lastAgentResponse = data.output?.content || 'Mission parameters synchronized.';
+                lastAgentResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Mission parameters synchronized.';
                 addLog(`AGENT_OUTPUT: ${lastAgentResponse}`, 'agent');
                 const dl = `<a href="#" onclick="downloadRealAsset(); return false;" class="underline text-fuchsia-400 font-bold ml-2 uppercase">[Export Asset]</a>`;
                 addLog(`SUCCESS: Intelligence synthesis complete. ${dl}`, 'success');
