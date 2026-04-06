@@ -257,23 +257,32 @@
                     });
                     clearTimeout(id);
 
-                    if (response.ok) {
-                        const text = await response.text();
-                        try { 
-                            const json = JSON.parse(text); 
-                            addLog(`BRIDGE: ${p.name} connected.`, 'success');
-                            return json; 
-                        } catch(e) { }
-                    }
+                    const text = await response.text();
                     
-                    if (response.status === 403 && p.name.includes("Anywhere")) {
+                    if (response.status === 403 && p.name.includes("Anywhere") && text.includes("corsdemo")) {
                         addLog(`BRIDGE: ${p.name} needs manual unlock.`, 'error');
                         window.open("https://cors-anywhere.herokuapp.com/corsdemo", "_blank");
                         alert("Bitte auf der neuen Seite 'Request temporary access' klicken, um die Nexus-Brücke freizuschalten!");
+                        continue;
                     }
 
-                    addLog(`BRIDGE: ${p.name} rejected our signal.`, 'error');
+                    try { 
+                        const json = JSON.parse(text); 
+                        addLog(`BRIDGE: ${p.name} connected.`, 'success');
+                        
+                        if (!response.ok) {
+                            const errMsg = json.error?.message || json.error_description || JSON.stringify(json);
+                            throw new Error(`GOOGLE_API_ERROR: ${errMsg}`);
+                        }
+                        
+                        return json; 
+                    } catch(e) { 
+                        if (e.message.includes("GOOGLE_API_ERROR")) throw e; 
+                    }
+
+                    addLog(`BRIDGE: ${p.name} proxy rejected signal.`, 'error');
                 } catch(e) { 
+                    if (e.message.includes("GOOGLE_API_ERROR")) throw e;
                     addLog(`BRIDGE: ${p.name} offline.`, 'error');
                 }
             }
