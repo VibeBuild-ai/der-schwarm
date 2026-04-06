@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -77,7 +77,7 @@
         <!-- TERMINAL VIEW -->
         <div id="view-dashboard" class="flex flex-col flex-1 p-10 space-y-10 overflow-y-auto view-animate">
             <div class="glass-panel p-2 shadow-2xl transition-all border-blue-500/10">
-                <textarea id="commandInput" placeholder="CMD: Welches Intelligenz-Asset soll der Schwarm generieren?" 
+                <textarea id="commandInput" placeholder="CMD: What intelligence asset should The Swarm generate?" 
                           class="w-full h-44 bg-transparent p-8 text-slate-100 text-lg font-light outline-none resize-none placeholder-slate-800"></textarea>
                 
                 <div class="flex items-center justify-between p-4 bg-black/40 rounded-b-xl border-t border-white/5">
@@ -358,7 +358,7 @@
                 
                 const promptPayload = {
                     "contents": [{ "role": "user", "parts": [{ "text": prompt }] }],
-                    "systemInstruction": { "parts": [{ "text": "Du bist der COMMANDER von VIBE BUILD | DER SCHWARM. Deine Aufgabe ist es, Befehle analytisch und professionell zu beantworten. Strukturiere deine Antwort als 'Mission Report' mit Teil-Einschätzungen von deinen Sub-Agenten (Researcher, Auditor, Analyst)." }] },
+                    "systemInstruction": { "parts": [{ "text": "You are the COMMANDER of VIBE BUILD | THE SWARM. Your objective is to answer directives analytically and professionally. Structure your response as a 'Mission Report' featuring sub-assessments from your specialized agents (Researcher, Auditor, and Analyst)." }] },
                     "generationConfig": { "temperature": 0.4 }
                 };
 
