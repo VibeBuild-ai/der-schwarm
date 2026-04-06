@@ -429,9 +429,8 @@
                 lastAgentResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Mission parameters synchronized.';
                 addLog(`SWARM SYNTHESIS COMPLETE. Converting payload to PDF...`, 'agent'); // Very stealthy
 
-                const dl1 = `<a href="#" onclick="generatePDFAsset(); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT AS PDF]</a>`;
-                const dl2 = `<a href="#" onclick="downloadRealAsset(); return false;" class="underline text-fuchsia-400 font-bold ml-4 uppercase hover:text-fuchsia-300 transition-colors">[📄 EXTRACT AS MARKDOWN]</a>`;
-                addLog(`MISSION SUCCESS. Payload ready for extraction: ${dl1} ${dl2}`, 'success');
+                const dl1 = `<a href="#" onclick="generatePDFAsset(); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT AS ASSET]</a>`;
+                addLog(`MISSION SUCCESS. Payload ready for extraction: ${dl1}`, 'success');
 
             } catch(e) {
                 addLog(`CRITICAL_FAILURE: ${e.message}`, 'error');
@@ -489,13 +488,6 @@
             printWindow.document.close();
             
             addLog(`ASSET GENERATOR: Native print dialect engaged.`, 'success');
-        }
-
-        function downloadRealAsset() {
-            const blob = new Blob([`VIBE BUILD | INTELLIGENCE ASSET\n\nCommand: ${input.value}\n\nResult:\n${lastAgentResponse}`], { type: 'text/markdown' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'VibeBuild_Agent_Output.md';
-            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
         }
 
         function setPrompt(key) {
