@@ -225,15 +225,23 @@
             if(!input.value) return alert('Input Required!');
             
             terminal.innerHTML = '';
-            addLog(`SWARM COMMENCE: Executing logic for mission...`, 'success');
+            addLog(`SWARM-DISPATCH INITIALIZED... Command: "${input.value.substring(0, 30)}..."`, 'success');
             await sleep(1500);
-            addLog('Node [Researcher] harvesting data...', 'info');
-            await sleep(2000);
-            addLog('Node [Auditor] validating security protocols...', 'info');
-            await sleep(1500);
-            addLog('MISSION STATUS: EXPORT SUCCESSFUL.', 'success');
             
-            // MAGIC: CREATE ARTIFACT
+            addLog('COMMANDER @ Unit_Researcher: Harvesting global datasets...', 'agent');
+            await sleep(2500);
+            
+            addLog('COMMANDER @ Unit_Auditor: Validating architecture protocols...', 'agent');
+            await sleep(2000);
+
+            addLog('COMMANDER @ Unit_Analyst: Synthesizing final intelligence report...', 'agent');
+            await sleep(1500);
+            
+            // DOWNLOAD LINK IN LOG
+            const downloadLink = `<a href="#" onclick="alert('Download gestartet: VibeBuild_Report_060426.pdf'); return false;" class="underline text-fuchsia-400 font-bold hover:text-white transition-all ml-2">[DOWNLOAD ASSET]</a>`;
+            addLog(`MISSION COMPLETE: Intelligence Asset generiert. ${downloadLink}`, 'success');
+            addLog('SWARM-MODE: Entering Idle hibernation.', 'warn');
+            
             createArtifactCard();
         }
 
