@@ -387,121 +387,104 @@
             }
         }
 
+        // Global variable for isolated parallel assets
+        let assetPayloads = [];
+
         async function dispatchSwarm() {
-            const prompt = input.value;
-            if(!prompt) return alert("Directive required.");
-            
+            const inputVal = document.getElementById('user-input').value;
+            if(!inputVal.trim()) return alert("Directive required.");
             if (!auth.privateKey || !auth.projectId) {
                 addLog('AUTHORITY_ERROR: Please link your Service Account JSON.', 'error');
                 switchView('connector'); return;
             }
 
-            btn.disabled = true;
-            terminal.innerHTML = '';
+            // Note: We deliberately do NOT disable the button, allowing parallel dispatch!
             addLog(`NEXUS_HANDSHAKE: Securing autonomous authority token...`, 'success');
 
             try {
                 const token = await getAccessToken();
-                
-                // We map 'the_swarm' to Gemini 2.5 Flash to bypass the 30-second public Proxy timeout 
-                let modelId = auth.agentId === "the_swarm" || auth.agentId === "the_swarm" ? "gemini-2.5-flash" : auth.agentId;
-                if (!modelId.includes("gemini")) modelId = "gemini-2.5-flash"; // Fallback Safenet
-
+                let modelId = "gemini-2.5-flash"; // Force fast model for proxies
                 const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/publishers/google/models/${modelId}:generateContent`;
                 
-                addLog(`BROADCAST: Sending signal via redundant Proxy-Bridge...`, 'success');
-                
                 const promptPayload = {
-                    "contents": [{ "role": "user", "parts": [{ "text": prompt }] }],
-                    "systemInstruction": { "parts": [{ "text": "You are the COMMANDER of VIBE BUILD | THE SWARM. Your objective is to answer directives analytically and professionally. Structure your response as a 'Mission Report' featuring sub-assessments from your specialized agents (Researcher, Auditor, and Analyst)." }] },
+                    "contents": [{ "role": "user", "parts": [{ "text": inputVal }] }],
+                    "systemInstruction": { "parts": [{ "text": "You are a high-level specialist within 'The Swarm'. Output raw, highly analytical data without pleasantries. Prioritize precision." }] },
                     "generationConfig": { "temperature": 0.4 }
                 };
 
-                let data;
-                if (auth.vpsProxy) {
-                    const vpsUrl = `${auth.vpsProxy}/nexus_gateway?url=${encodeURIComponent(endpoint)}`;
-                    const res = await fetch(vpsUrl, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(promptPayload)
-                    });
-                    if(!res.ok) throw new Error(`VPS_REJECTION: HTTP ${res.status}`);
-                    data = await res.json();
-                } else {
-                    data = await multiFetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(promptPayload)
-                    });
-                }
+                // Remove VPS check as we rely on public multiFetch for YouTube demo minimalism
+                addLog(`BROADCAST: Sending signal via redundant Proxy-Bridge...`, 'success');
+                let data = await multiFetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(promptPayload)
+                });
 
-                lastAgentResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Mission parameters synchronized.';
-                addLog(`SWARM SYNTHESIS COMPLETE. Converting payload to PDF...`, 'agent'); // Very stealthy
+                let responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Mission parameters synchronized.';
+                addLog(`SWARM TASK COMPLETE. Converting payload to Asset...`, 'agent');
 
-                const dl1 = `<a href="#" onclick="generatePDFAsset(); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT AS ASSET]</a>`;
+                const assetId = assetPayloads.length;
+                assetPayloads.push({ directive: inputVal, response: responseText });
+
+                const dl1 = `<a href="#" onclick="generatePDFAsset(${assetId}); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT AS ASSET]</a>`;
                 addLog(`MISSION SUCCESS. Payload ready for extraction: ${dl1}`, 'success');
 
             } catch(e) {
                 addLog(`CRITICAL_FAILURE: ${e.message}`, 'error');
-            } finally {
-                btn.disabled = false;
             }
         }
 
         async function dispatchFullSwarm() {
-            const input = document.getElementById('user-input');
+            const inputVal = document.getElementById('user-input').value;
             const btn = document.getElementById('btn-dispatch');
-            if (!input.value.trim() || !auth.privateKey) return;
+            if(!inputVal.trim()) return alert("Directive required.");
+            if (!auth.privateKey || !auth.projectId) {
+                addLog('AUTHORITY_ERROR: Please link your Service Account JSON.', 'error');
+                switchView('connector'); return;
+            }
             
-            btn.disabled = true;
-            document.getElementById('terminal-content').innerHTML = ''; // Clear logs
+            btn.disabled = true; // Lock button during full swarm orchestration
+            terminal.innerHTML = '';
             
             try {
-                await getAccessToken();
-                const systemPrompt = `You are a high-level specialist within 'The Swarm' autonomous network. You prioritize accuracy, highly technical insight, and elite formatting.`;
+                const token = await getAccessToken();
+                let modelId = "gemini-2.5-flash"; 
+                const endpoint = `https://${auth.location}-aiplatform.googleapis.com/v1/projects/${auth.projectId}/locations/${auth.location}/publishers/google/models/${modelId}:generateContent`;
+                
+                const systemTemplate = "You are a high-level specialist within 'The Swarm'. Output raw, highly analytical data without pleasantries. Prioritize elite formatting.";
                 
                 addLog(`INITIATING FULL SWARM PROTOCOL (3-NODE CHAIN)...`, 'agent');
 
-                // NODE 1: RESEARCHER
+                // NODE 1
                 addLog(`[NODE 1] RESEARCHER: Gathering comprehensive intelligence...`, 'agent');
-                let payload1 = {
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: "user", parts: [{ text: "Act as an elite Web Researcher. Gather and structure deep intelligence on the following directive. Provide raw, unstructured technical data and facts.\n\nDirective: " + input.value }] }]
-                };
-                let r1 = await multiFetch(payload1);
-                let res1 = r1.candidates?.[0]?.content?.parts?.[0]?.text || 'No data found.';
+                let p1 = { "contents": [{ "role": "user", "parts": [{ "text": "Act as an elite Web Researcher. Gather deep facts on: " + inputVal }] }], "systemInstruction": { "parts": [{ "text": systemTemplate }] } };
+                let d1 = await multiFetch(endpoint, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(p1) });
+                let res1 = d1.candidates?.[0]?.content?.parts?.[0]?.text || 'No data.';
                 addLog(`[NODE 1] RESEARCHER: Data acquired. Handing over to Auditor.`, 'success');
                 
-                // Slight delay for stability on public proxies
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 1000));
 
-                // NODE 2: AUDITOR
+                // NODE 2
                 addLog(`[NODE 2] AUDITOR: Verifying data and finding weak points...`, 'agent');
-                let payload2 = {
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: "user", parts: [{ text: "Act as a strict Logic & Code Auditor. Review the following research data. Identify flaws, technical risks, and missing context. Provide a harsh, highly analytical audit.\n\nResearch Data:\n" + res1 }] }]
-                };
-                let r2 = await multiFetch(payload2);
-                let res2 = r2.candidates?.[0]?.content?.parts?.[0]?.text || 'No vulnerabilities found.';
+                let p2 = { "contents": [{ "role": "user", "parts": [{ "text": "Act as a strict Logic Auditor. Review these facts and identify flaws/risks:\n\n" + res1 }] }], "systemInstruction": { "parts": [{ "text": systemTemplate }] } };
+                let d2 = await multiFetch(endpoint, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(p2) });
+                let res2 = d2.candidates?.[0]?.content?.parts?.[0]?.text || 'No risks identified.';
                 addLog(`[NODE 2] AUDITOR: Audit complete. Handing over to Final Analyst.`, 'success');
 
-                // Slight delay
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 1000));
 
-                // NODE 3: FINAL ANALYST
+                // NODE 3
                 addLog(`[NODE 3] ANALYST: Synthesizing final executive report...`, 'agent');
-                let payload3 = {
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: "user", parts: [{ text: "Act as a Final Master Analyst. You are writing for the Commander. Read the raw research and the critical audit. Synthesize BOTH into a final, brilliantly formatted Executive Summary. Do not output conversational text, just the final report.\n\nRESEARCH:\n" + res1 + "\n\nCRITICAL AUDIT:\n" + res2 }] }]
-                };
-                let r3 = await multiFetch(payload3);
-                let res3 = r3.candidates?.[0]?.content?.parts?.[0]?.text || 'Synthesis failed.';
+                let p3 = { "contents": [{ "role": "user", "parts": [{ "text": "Act as Final Analyst. Read Research and Audit, then synthesize a final Executive Summary.\n\nRESEARCH:\n" + res1 + "\n\nCRITICAL AUDIT:\n" + res2 }] }], "systemInstruction": { "parts": [{ "text": systemTemplate }] } };
+                let d3 = await multiFetch(endpoint, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(p3) });
+                let res3 = d3.candidates?.[0]?.content?.parts?.[0]?.text || 'Synthesis failed.';
                 
-                // Combine into master asset
-                lastAgentResponse = `>>> PHASE 1: RESEARCH INTELLIGENCE\n\n${res1}\n\n=========================================\n\n>>> PHASE 2: SECURITY & LOGIC AUDIT\n\n${res2}\n\n=========================================\n\n>>> PHASE 3: MASTER SYNTHESIS\n\n${res3}`;
+                let finalRes = `>>> PHASE 1: RESEARCH INTELLIGENCE\n\n${res1}\n\n=========================================\n\n>>> PHASE 2: SECURITY & LOGIC AUDIT\n\n${res2}\n\n=========================================\n\n>>> PHASE 3: MASTER SYNTHESIS\n\n${res3}`;
                 
+                const assetId = assetPayloads.length;
+                assetPayloads.push({ directive: inputVal, response: finalRes });
                 addLog(`SWARM SYNTHESIS COMPLETE. Compiling Multi-Agent Payload...`, 'agent');
-                const dl1 = `<a href="#" onclick="generatePDFAsset(); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT SWARM ASSET]</a>`;
+                const dl1 = `<a href="#" onclick="generatePDFAsset(${assetId}); return false;" class="underline text-red-500 font-bold ml-2 uppercase hover:text-red-400 transition-colors">[📎 EXTRACT SWARM ASSET]</a>`;
                 addLog(`MISSION SUCCESS. Full Swarm payload ready for extraction: ${dl1}`, 'success');
 
             } catch(e) {
@@ -511,8 +494,11 @@
             }
         }
 
-        function generatePDFAsset() {
-            addLog(`ASSET GENERATOR: Compiling Swarm Intelligence Report...`, 'success');
+        function generatePDFAsset(assetId) {
+            const asset = assetPayloads[assetId];
+            if (!asset) return;
+            
+            addLog(`ASSET GENERATOR: Compiling Swarm Intelligence Report (ID: ${assetId})...`, 'success');
             
             const htmlContent = `
                 <!DOCTYPE html>
@@ -541,9 +527,9 @@
                     </div>
                     <div class="directive">
                         <span class="directive-title">COMMANDER DIRECTIVE:</span>
-                        <p class="directive-text">${input.value}</p>
+                        <p class="directive-text">${asset.directive}</p>
                     </div>
-                    <div class="content">${lastAgentResponse}</div>
+                    <div class="content">${asset.response}</div>
                     
                     <script>
                         window.onload = function() {
@@ -558,8 +544,6 @@
             printWindow.document.open();
             printWindow.document.write(htmlContent);
             printWindow.document.close();
-            
-            addLog(`ASSET GENERATOR: Native print dialect engaged.`, 'success');
         }
 
         function setPrompt(key) {
