@@ -203,10 +203,10 @@
                 auth.clientEmail = data.client_email;
             } catch(e) {}
             
-            auth.projectId = auth.projectId || document.getElementById('projectId').value;
-            auth.agentId = document.getElementById('agentId').value;
-            auth.vpsProxy = document.getElementById('vpsProxy').value;
-            auth.rawJson = raw; // IMMER speichern!
+            auth.projectId = auth.projectId || (document.getElementById('projectId') ? document.getElementById('projectId').value : '');
+            auth.agentId = document.getElementById('agentId') ? document.getElementById('agentId').value : 'the_swarm';
+            auth.vpsProxy = document.getElementById('vpsProxy') ? document.getElementById('vpsProxy').value : '';
+            auth.rawJson = raw; // ALWAYS save!
 
             Object.keys(auth).forEach(k => {
                 if (auth[k]) localStorage.setItem(k, auth[k]);
@@ -234,7 +234,7 @@
                 if(unconnectedView) unconnectedView.classList.add('hidden');
                 if(document.getElementById('display-project')) document.getElementById('display-project').innerText = auth.projectId;
 
-                // Fill fields
+                // Fill fields if they exist
                 if(document.getElementById('projectId')) document.getElementById('projectId').value = auth.projectId;
                 if(document.getElementById('agentId')) document.getElementById('agentId').value = auth.agentId;
                 if(document.getElementById('vpsProxy')) document.getElementById('vpsProxy').value = auth.vpsProxy;
