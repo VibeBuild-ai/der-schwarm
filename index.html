@@ -168,6 +168,40 @@
         </div>
     </main>
 
+    <!-- ASSET OVERLAY (STABLE IN-APP RENDERER) -->
+    <div id="asset-overlay" class="hidden fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 print:static print:p-0 print:bg-white">
+        <div class="w-full max-w-5xl h-[90vh] bg-white rounded-sm flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden print:h-auto print:shadow-none print:rounded-none">
+            <div class="bg-slate-50 border-b border-slate-200 px-8 py-4 flex items-center justify-between print:hidden">
+                <div class="flex items-center space-x-4">
+                    <div class="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest">Executive Asset</div>
+                    <span id="overlay-id-badge" class="text-[10px] text-slate-400 font-mono italic">---</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="window.print()" class="px-6 py-2 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest transition-all">Print Intelligence</button>
+                    <button onclick="closeAssetOverlay()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest transition-all">Close</button>
+                </div>
+            </div>
+            <div id="overlay-content-area" class="flex-1 overflow-y-auto p-12 md:p-20 bg-white text-black">
+                <div class="max-w-3xl mx-auto">
+                    <div class="border-b-4 border-black pb-8 mb-10">
+                        <h1 class="text-4xl font-black uppercase tracking-tight">Vibe Build // The Swarm</h1>
+                        <p class="text-slate-500 font-mono text-xs mt-2 uppercase">Official Intelligence Extraction Protocol</p>
+                    </div>
+                    <div class="space-y-12">
+                        <section>
+                            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Commander Directive:</h2>
+                            <div id="overlay-directive" class="text-xl font-bold border-l-4 border-blue-600 pl-6 py-2 italic font-serif leading-relaxed">---</div>
+                        </section>
+                        <section>
+                            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Intelligence Synthesis:</h2>
+                            <div id="overlay-response" class="font-mono text-sm text-slate-800 leading-loose whitespace-pre-wrap">---</div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const terminal = document.getElementById('log-terminal');
         const input = document.getElementById('commandInput');
@@ -434,75 +468,20 @@
             }
         }
 
+        function closeAssetOverlay() {
+            document.getElementById('asset-overlay').classList.add('hidden');
+        }
+
         function generatePDFAsset(assetId) {
             const asset = assetPayloads[assetId];
             if (!asset) return;
             
-            addLog(`ASSET GENERATOR: Initializing secure render for ID: ${assetId}...`, 'success');
+            document.getElementById('overlay-id-badge').innerText = `ID: ${assetId} // VERIFIED`;
+            document.getElementById('overlay-directive').innerText = asset.directive;
+            document.getElementById('overlay-response').innerText = asset.response;
             
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>VibeBuild_Intel_Report_${assetId}</title>
-                    <style>
-                        body { font-family: 'Courier New', monospace; padding: 40px; color: #111; background: #fff; line-height: 1.6; }
-                        .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-                        .header-left h1 { font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
-                        .meta { color: #666; font-size: 11px; margin-top: 5px; }
-                        .directive { margin-bottom: 30px; background: #f5f5f5; padding: 15px; border-left: 4px solid #000; }
-                        .directive-title { font-weight: 900; font-size: 11px; }
-                        .directive-text { margin: 10px 0 0 0; font-size: 13px; font-weight: bold; }
-                        .content { font-size: 12px; color: #333; white-space: pre-wrap; word-wrap: break-word; }
-                        .print-btn { background: #000; color: #fff; border: none; padding: 8px 16px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-                        @media print {
-                            .print-btn { display: none; }
-                            body { padding: 0; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <div class="header-left">
-                            <h1>Vibe Build | The Swarm</h1>
-                            <p class="meta">TOP SECRET // INTELLIGENCE ASSET // ID: ${assetId}</p>
-                            <p class="meta">Timestamp: ${new Date().toLocaleString()}</p>
-                        </div>
-                        <button class="print-btn" onclick="window.print()">Print Intelligence</button>
-                    </div>
-                    <div class="directive">
-                        <span class="directive-title">COMMANDER DIRECTIVE:</span>
-                        <p class="directive-text">${asset.directive}</p>
-                    </div>
-                    <div class="content">${asset.response}</div>
-                    
-                    <script>
-                        // Delay print slightly to ensure UI thread is free
-                        setTimeout(() => {
-                            window.print();
-                        }, 800);
-                    <\/script>
-                </body>
-                </html>
-            `;
-            
-            // Open window with unique name + timestamp to avoid process locking
-            const winName = 'swarm_asset_' + assetId + '_' + Date.now();
-            const printWindow = window.open('', winName, 'width=900,height=800');
-            
-            if (!printWindow) {
-                addLog(`CRITICAL ERROR: Browser blocked the asset window.`, 'error');
-                return alert("Popup blocked! Please enable popups for the Swarm Dashboard.");
-            }
-            
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            
-            // Ensure child window is prioritized
-            setTimeout(() => {
-                if (printWindow) printWindow.focus();
-                addLog(`ASSET GENERATOR: Target_${assetId} rendered successfully.`, 'success');
-            }, 200);
+            document.getElementById('asset-overlay').classList.remove('hidden');
+            addLog(`ASSET OVERLAY: Target_${assetId} loaded into extraction buffer.`, 'success');
         }
 
         function setPrompt(key) {
